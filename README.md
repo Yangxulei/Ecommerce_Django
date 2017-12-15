@@ -1,5 +1,5 @@
 # Ecommerce_Django
-a E-commerce website with Django
+an E-commerce website with Django
 
 ## 开发环境
 - Python3.6
