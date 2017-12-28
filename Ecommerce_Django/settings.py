@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'ec_user',
     'ec_goods',
     'tinymce',
+    'haystack',
+    'djcelery',
 ]
 
 MIDDLEWARE = [
@@ -126,19 +128,64 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
+#
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static')
-]
-#开发阶段目录
-MEDIA_ROOT = os.path.join(BASE_DIR,'static')
-# 部署时图片上次资源位置
-#MEDIA_ROOT = '')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+MEDIA_ROOT = os.path.join(BASE_DIR, 'static')
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.qq.com'
+EMAIL_PORT = 25
+# 发送邮件的邮箱
+EMAIL_HOST_USER = 'uqraiyang@qq.com'
+# 在邮箱中设置的客户端授权密码
+EMAIL_HOST_PASSWORD = 'pbsgzazfqrfnbfgf'
+
+# 收件人看到的发件人
+EMAIL_FROM = 'yangxulei<uqraiyang@qq.com>'
+
+EMAIL_USE_TLS = True  # 与SMTP服务器通信时，是否启动TLS链接(安全链接)。默认是false
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+import djcelery
+
+djcelery.setup_loader()  # 去注册的应用找tasks
+BROKER_URL = 'redis://127.0.0.1:6379/2'
+
+# 富文本编辑器配置
 TINYMCE_DEFAULT_CONFIG = {
     'theme': 'advanced',
     'width': 600,
     'height': 400,
-
 }
+
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        # 使用whoosh引擎
+        'ENGINE': 'haystack.backends.whoosh_cn_backend.WhooshEngine',
+        # 索引文件路径
+        'PATH': os.path.join(BASE_DIR, 'whoosh_index'),
+    }
+}
+
+# 当添加、修改、删除数据时，自动生成索引
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
+HAYSTACK_SEARCH_RESULTS_PER_PAGE = 6 # 指定搜索结果每页显示多少条信息
+
+
+# STATIC_URL = '/static/'
+# STATICFILES_DIRS = [
+#     os.path.join(BASE_DIR, 'static')
+# ]
+# #开发阶段目录
+# MEDIA_ROOT = os.path.join(BASE_DIR,'static')
+# # 部署时图片上次资源位置
+# #MEDIA_ROOT = '')
+#
+# TINYMCE_DEFAULT_CONFIG = {
+#     'theme': 'advanced',
+#     'width': 600,
+#     'height': 400,
+#
+# }

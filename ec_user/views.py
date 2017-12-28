@@ -70,7 +70,7 @@ def login_handle(request):
             return render(request, 'ec_user/login.html', context)
     else:
         context = {'title': '用户登录', 'error_name': 1, 'error_pwd': 0, 'uname': uname, 'upwd': upwd}
-        return render(request, 'ec_user/login.html', context)
+        return render(request, 'ec_user/user_center_info.html', context)
 
 
 def info(request):
@@ -83,7 +83,7 @@ def info(request):
 
 def order(request):
     context={'title':'用户中心'}
-    return render(request,'ec_user/user_center_order.html',context)
+    return render(request, 'ec_user/user_center_order.html',context)
 
 def site(request):
     user = UserInfo.objects.get(id=request.session['user_id'])
