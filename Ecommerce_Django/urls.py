@@ -21,5 +21,5 @@ urlpatterns = [
     url(r'^search/', include('haystack.urls')),
     url(r'^user/', include('ec_user.urls')),  # 用户模块
     url(r'^', include('ec_goods.urls')),
-    url(r'^cart/', include('ec_cart.urls')),
+   # url(r'^cart/', include('ec_cart.urls')),
 ]
