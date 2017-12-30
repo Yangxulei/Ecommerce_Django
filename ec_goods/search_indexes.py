@@ -1,5 +1,4 @@
 # -*-coding:utf-8-*-
-
 from haystack import indexes
 from ec_goods.models import Goods
 

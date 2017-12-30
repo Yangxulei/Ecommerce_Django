@@ -33,7 +33,7 @@ def home_list_page(request):
                'eggs': eggs, 'eggs_new': eggs_new,
                'vegetables': vegetables, 'vegetables_new': vegetables_new,
                'frozen': frozen, 'frozen_new': frozen_new}
-    return render(request, 'df_goods/index.html',
+    return render(request, 'ec_goods/index.html',
                   context
                   )
 
@@ -43,7 +43,7 @@ def home_list_page(request):
 #     images = Image.objects.get_image_by_goods_id(goods_id=goods_id)
 #     goods = Goods.objects_logic.get_goods_by_id(goods_id=goods_id)
 #     return render(request,
-#                   'df_goods/detail.html',
+#                   'ec_goods/detail.html',
 #                   {'goods':goods})
 
 def goods_detail(request, goods_id):
@@ -56,7 +56,7 @@ def goods_detail(request, goods_id):
     type_title = GOODS_TYPE[goods.goods_type_id]
     # 3.使用模板文件detail.html
     # print('goos_detail'+goods.img_url)
-    return render(request, 'df_goods/detail.html', {'goods': goods,
+    return render(request, 'ec_goods/detail.html', {'goods': goods,
                                                     'goods_new': goods_new,
                                                     'type_title': type_title})
 

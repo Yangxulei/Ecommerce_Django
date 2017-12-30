@@ -47,7 +47,7 @@
 
 			<div class="pagenation">
                 {% if goods_li.has_previous %}
-				    <a href="/list/{{ type_id }}/{{ goods_li.previous_page_number }}/?sort={{ sort }}"><上一页</a>
+				    <a href="/list/{{ type_id }}/{{ goods_li.previous_page_number }}/?sort={{ sort }}">上一页</a>
                 {% endif %}
                 {% for pindex in pages %}
                     {% if pindex == goods_li.number %}
