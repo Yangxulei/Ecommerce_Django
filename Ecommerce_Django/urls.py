@@ -15,11 +15,15 @@ Including another URLconf
 """
 from django.conf.urls import url,include
 from django.contrib import admin
+from ec_goods import search_views
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    url(r'^search/', include('haystack.urls')),
-    url(r'^user/', include('ec_user.urls')),  # 用户模块
-    url(r'^', include('ec_goods.urls')),
-   # url(r'^cart/', include('ec_cart.urls')),
+    url(r'^user/', include('ec_user.urls')),
+    url(r'^cart/', include('ec_cart.urls')),
+    url(r'^goods/', include('ec_goods.urls')),
+    url(r'^order/', include('ec_order.urls')),
+    url(r'^tinymce/', include('tinymce.urls')),
+    url(r'^', include('ec_goods.urls', namespace='goods')),
+    url(r'^search/', search_views.MySeachView(), name='haystack_search'),
 ]

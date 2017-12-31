@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'ec_user',
     'ec_goods',
+    'ec_order',
+    'ec_cart',
     'tinymce',
     'haystack',
     'djcelery',

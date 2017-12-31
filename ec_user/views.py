@@ -1,98 +1,162 @@
-# coding=utf-8
+#coding=utf-8
+from __future__ import unicode_literals
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, HttpResponseRedirect
+from django.http import HttpResponse
 from ec_user.models import *
 from hashlib import sha1
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import JsonResponse
+from .islogin import islogin
+from ec_goods.models import GoodsInfo
+from ec_order.models import OrderInfo
+from django.core.paginator import Paginator
 
 
 # Create your views here.
-
 def register(request):
     return render(request, 'ec_user/register.html')
 
-def register_exist(request):
-    uname = request.GET.get('uname')
+
+# 登入处理
+def register_handle(requst):
+    response = HttpResponse()
+    # 接收用户输入
+    post = requst.POST
+    uname = post.get('user_name')
+    upwd = post.get('pwd').encode("UTF-8")
+    ucpwd = post.get('cpwd').encode("UTF-8")
+    uemail = post.get('email')
+    # 判断两次密码
+    if upwd != ucpwd:
+        return HttpResponse("failed")
+    # 加密
+    s1 = sha1()
+    s1.update(upwd)
+    upwd2 = s1.hexdigest()
+
+    # 创建对象
+    user = UserInfo()
+    user.uname = uname
+    user.upwd = upwd2
+    user.uemail = uemail
+    user.save()
+    return HttpResponse("success")
+    # 注册成功，转到登录页面
+    # return redirect('/user/login/')
+    # return JsonResponse({'status': "success"})
+
+# 判断用户是否已经存在
+def register_exist(requset):
+    uname = requset.GET.get('uname')
     count = UserInfo.objects.filter(uname=uname).count()
     return JsonResponse({'count': count})
 
-def register_handle(request):
-    #接受用户输入
-    post = request.POST
-    uname = post.get('user_name')
-    upwd = post.get('pwd')
-    upwd2 = post.get('cpwd')
-    uemail = post.get('email')
-    #判断密码
-    if upwd != upwd2:
-        return redirect('/user/register/')
-    #加密
-    s1 = sha1()
-    s1.update(upwd.encode('utf-8'))
-    upwd3 = s1.hexdigest()
-    #创建对象
-    user = UserInfo()
-    user.uname = uname
-    user.upwd = upwd3
-    user.uemail = uemail
-    user.save()
-    #注册成功，转到登录页
-    return redirect('/user/login/')
 
+# 登录界面
 def login(request):
     uname = request.COOKIES.get('uname', '')
-    context={'title': '用户登录', 'error_name': 0, 'error_pwd': 0, 'uname': uname}
-    return  render(request, 'ec_user/login.html', context)
+    context = {'title': '用户登录', 'error_name': 0, 'error_pwd': 0, 'uname': uname}
+    return render(request, 'ec_user/login.html', context)
 
+
+# 登录处理
 def login_handle(request):
-    post= request.POST
-    uname = post.get('username')
-    upwd = post.get('pwd').encode('utf-8')
-    jizhu = post.get('jizhu', 0)  #命名不是那么规范，先这样吧
-    #根据用户名查询对象
+    # 接收请求信息
+    post = request.POST
+    uname = post.get('username').encode("UTF-8")
+    upwd = post.get('pwd').encode("UTF-8")
+    jizhu = post.get('jizhu', 0)
+    # 根据用户名查询对象
     users = UserInfo.objects.filter(uname=uname)
     print(uname)
-    #判断
+    # 判断如果未查到则用户名错，查到再判断密码是否正确，正确则转到用户中心
     if len(users) == 1:
         s1 = sha1()
         s1.update(upwd)
         if s1.hexdigest() == users[0].upwd:
-            red = HttpResponseRedirect('/user/info/')
-            #记住用户名
+            red = HttpResponseRedirect('/user/info')
+            # 记住用户名
             if jizhu != 0:
                 red.set_cookie('uname', uname)
             else:
                 red.set_cookie('uname', '', max_age=-1)
             request.session['user_id'] = users[0].id
             request.session['user_name'] = uname
+            return red
         else:
             context = {'title': '用户登录', 'error_name': 0, 'error_pwd': 1, 'uname': uname, 'upwd': upwd}
             return render(request, 'ec_user/login.html', context)
     else:
         context = {'title': '用户登录', 'error_name': 1, 'error_pwd': 0, 'uname': uname, 'upwd': upwd}
-        return render(request, 'ec_user/user_center_info.html', context)
+        return render(request, 'ec_user/login.html', context)
 
 
+# 登录用户中心
+@islogin
 def info(request):
     user_email = UserInfo.objects.get(id=request.session['user_id']).uemail
+
+    #最近浏览
+    goods_ids = request.COOKIES.get('goods_ids', '')
+    goods_id_list = goods_ids.split(',')
+    goods_list=[]
+    for goods_id in goods_id_list:
+        goods_list.append(GoodsInfo.objects.get(id=int(goods_id)))
+
     context = {'title': '用户中心',
-                'user_email': 'user_email',
-               'user_name': request.session['user_name']
-    }
-    return render(request, 'ec_user/user_center_info.html',context)
+               'user_email': user_email,
+               'user_name': request.session['user_name'],
+               'page_name':1,'info':1,
+               'goods_list':goods_list}
+    return render(request, 'ec_user/user_center_info.html', context)
 
+
+# 订单
+@islogin
 def order(request):
-    context={'title':'用户中心'}
-    return render(request, 'ec_user/user_center_order.html',context)
+    context = {'title': '用户中心','page_name':1,'order':1}
+    return render(request, 'ec_user/user_center_order.html', context)
 
+
+# 收货地址
+@islogin
 def site(request):
     user = UserInfo.objects.get(id=request.session['user_id'])
-    if request.POST=='POST':
+    if request.method == 'POST':
         post = request.POST
         user.ushou = post.get('ushou')
         user.uaddress = post.get('uaddress')
-        user.uyoubian = post.get('uyoubian')
         user.uphone = post.get('uphone')
+        user.uyoubian = post.get('uyoubian')
         user.save()
-    context = {'title': '用户中心', 'user': user}
-    return  render(request, 'ec_user/user_center_site.html', context)
+    context = {'title': '用户中心', 'user': user,'page_name':1,'site':1}
+    return render(request, 'ec_user/user_center_site.html', context)
+
+
+def logout(request):
+    request.session.flush()
+    return redirect('/')
+
+
+@islogin
+def user_center_order(request, pageid):
+    """
+    此页面用户展示用户提交的订单，由购物车页面下单后转调过来，也可以从个人信息页面查看
+    根据用户订单是否支付、下单顺序进行排序
+    """
+
+    uid = request.session.get('user_id')
+    # 订单信息，根据是否支付、下单顺序进行排序
+    orderinfos = OrderInfo.objects.filter(
+        user_id=uid).order_by('oIsPay', '-oid')
+
+    # 分页
+    paginator = Paginator(orderinfos, 2)
+    orderlist = paginator.page(int(pageid))
+    plist = paginator.page_range
+
+    # 构造上下文
+    context = {'page_name': 1, 'title': '全部订单', 'pageid': int(pageid),
+               'order': 1, 'orderlist': orderlist, 'plist': plist}
+
+    return render(request, 'ec_user/user_center_order.html', context)
