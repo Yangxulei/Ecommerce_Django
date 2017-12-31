@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# coding=utf-8
 from __future__ import unicode_literals
 from ec_goods.models import GoodsInfo,TypeInfo
 from django.shortcuts import render
