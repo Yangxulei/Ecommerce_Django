@@ -1,156 +1,120 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+from ec_goods.models import GoodsInfo,TypeInfo
 from django.shortcuts import render
 from django.core.paginator import Paginator
-from ec_goods.models import Goods, Image
-from ec_goods.enums import *
-
 
 # Create your views here.
+# 查询每类商品最新的4个和点击率最高的4个
+def index(request):
+    """
+    index函数负责查询页面中需要展示的商品内容，
+    主要是每类最新的4种商品和4中点击率最高的商品，
+    每类商品需要查询2次
+    """
+    fruit = GoodsInfo.objects.filter(gtype__id=1).order_by("-id")[:4]
+    fruit2 = GoodsInfo.objects.filter(gtype__id=1).order_by("-gclick")[:3]
+    fish = GoodsInfo.objects.filter(gtype__id=2).order_by("-id")[:4]
+    fish2 = GoodsInfo.objects.filter(gtype__id=2).order_by("-gclick")[:3]
+    meat = GoodsInfo.objects.filter(gtype__id=3).order_by("-id")[:4]
+    meat2 = GoodsInfo.objects.filter(gtype__id=3).order_by("-gclick")[:4]
+    egg = GoodsInfo.objects.filter(gtype__id=4).order_by("-id")[:4]
+    egg2 = GoodsInfo.objects.filter(gtype__id=4).order_by("-gclick")[:4]
+    vegetables = GoodsInfo.objects.filter(gtype__id=5).order_by("-id")[:4]
+    vegetables2 = GoodsInfo.objects.filter(gtype__id=5).order_by("-gclick")[:4]
+    frozen = GoodsInfo.objects.filter(gtype__id=6).order_by("-id")[:4]
+    frozen2 = GoodsInfo.objects.filter(gtype__id=6).order_by("-gclick")[:4]
+    # count = CartInfo.objects.filter(
+    #     user_id=request.session.get('userid')).count()   'count':count,
+    # # 构造上下文
+    context = {'title': '首页', 'fruit': fruit,
+               'fish': fish, 'meat': meat, 'egg': egg,
+               'vegetables': vegetables, 'frozen': frozen,
+               'fruit2': fruit2, 'fish2': fish2, 'meat2': meat2,
+               'egg2': egg2, 'vegetables2': vegetables2, 'frozen2': frozen2,
+               'guest_cart': 1,'page_name':0,}
 
-def home_list_page(request):
-    fruits = Goods.objects.get_goods_by_type(goods_type_id=FRUIT, limit=4)
-    fruits_new = Goods.objects.get_goods_by_type(goods_type_id=FRUIT, limit=3, sort='new')
-
-    seafood = Goods.objects.get_goods_by_type(goods_type_id=SEAFOOD, limit=4)
-    seafood_new = Goods.objects.get_goods_by_type(goods_type_id=SEAFOOD, limit=3, sort='new')
-
-    meats = Goods.objects.get_goods_by_type(goods_type_id=MEAT, limit=4)
-    meats_new = Goods.objects.get_goods_by_type(goods_type_id=MEAT, limit=3, sort='new')
-
-    eggs = Goods.objects.get_goods_by_type(goods_type_id=EGGS, limit=4)
-    eggs_new = Goods.objects.get_goods_by_type(goods_type_id=EGGS, limit=3, sort='new')
-
-    vegetables = Goods.objects.get_goods_by_type(goods_type_id=VEGETABLES, limit=4)
-    vegetables_new = Goods.objects.get_goods_by_type(goods_type_id=VEGETABLES, limit=3, sort='new')
-
-    frozen = Goods.objects.get_goods_by_type(goods_type_id=FROZEN, limit=4)
-    frozen_new = Goods.objects.get_goods_by_type(goods_type_id=FROZEN, limit=3, sort='new')
-
-    # # 组织上下文数据
-    print(fruits)
-    context = {'fruits': fruits, 'fruits_new': fruits_new,
-               'seafood': seafood, 'seafood_new': seafood_new,
-               'meats': meats, 'meats_new': meats_new,
-               'eggs': eggs, 'eggs_new': eggs_new,
-               'vegetables': vegetables, 'vegetables_new': vegetables_new,
-               'frozen': frozen, 'frozen_new': frozen_new}
-    return render(request, 'ec_goods/index.html',
-                  context
-                  )
-
-
-# def goods_detail(request, goods_id):
-#     goods = Goods.objects.get_goods_by_id(goods_id=goods_id)
-#     images = Image.objects.get_image_by_goods_id(goods_id=goods_id)
-#     goods = Goods.objects_logic.get_goods_by_id(goods_id=goods_id)
-#     return render(request,
-#                   'ec_goods/detail.html',
-#                   {'goods':goods})
-
-def goods_detail(request, goods_id):
-    '''显示商品的详情页面'''
-    # 1.根据商品id查询商品信息，包含商品的详情图片信息 goods.img_url
-    goods = Goods.objects_logic.get_goods_by_id(goods_id=goods_id)
-    # 2.查询新品信息
-    goods_new = Goods.objects.get_goods_by_type(goods_type_id=goods.goods_type_id, limit=2, sort='new')
-    # 3.获取商品类型标题
-    type_title = GOODS_TYPE[goods.goods_type_id]
-    # 3.使用模板文件detail.html
-    # print('goos_detail'+goods.img_url)
-    return render(request, 'ec_goods/detail.html', {'goods': goods,
-                                                    'goods_new': goods_new,
-                                                    'type_title': type_title})
+    # 返回渲染模板
+    return render(request, 'ec_goods/index.html', context)
 
 
-def goods_list(request, goods_type_id, pindex):
-    # 获取查询方式
-    sort = request.GET.get('sort', 'default')
-    # 按照ID进行查询
-    goods_li = Goods.objects.get_goods_by_type(goods_type_id=goods_type_id, sort=sort)
-    # 查询新品
-    goods_new = Goods.objects.get_goods_by_type(goods_type_id=goods_type_id, limit=2, sort='new')
-    # 进行分页,一条每页
-    paginator = Paginator(goods_li, 1)
+#商品列表
+def goodlist(request, typeid, pageid, sort):
+    """
+    goodlist函数负责展示某类商品的信息。
+    url中的参数依次代表
+    typeid:商品类型id;selectid:查询条件id，1为根据id查询，2位根据价格查询，3位根据点击量查询
+    """
 
-    pindex = int(pindex)
-    # 取得第pindex页的内容
-    goods_li = paginator.page(pindex)
-    num_pages = paginator.num_pages  # 获取总页数
-    if num_pages < 5:
-        pages = range(1, num_pages + 1)
-    elif pindex <= 3:
-        pages = range(1, 6)
-    elif num_pages - pindex <= 2:
-        pages = range(num_pages - 4, num_pages + 1)
+    # 获取最新发布的商品
+    newgood = GoodsInfo.objects.all().order_by('-id')[:2]
+    # 根据条件查询所有商品
+    if sort == '1':#按最新
+        sumGoodList = GoodsInfo.objects.filter(
+            gtype__id=typeid).order_by('-id')
+    elif sort == '2':#按价格
+        sumGoodList = GoodsInfo.objects.filter(
+            gtype__id=typeid).order_by('gprice')
+    elif sort == '3':#按点击量
+        sumGoodList = GoodsInfo.objects.filter(
+            gtype__id=typeid).order_by('-gclick')
+    # 分页
+    paginator = Paginator(sumGoodList, 15)
+    goodList = paginator.page(int(pageid))
+    pindexlist = paginator.page_range
+    # 确定商品的类型
+    goodtype = TypeInfo.objects.get(id=typeid)
+    # count = CartInfo.objects.filter(
+    #     user_id=request.session.get('userid')).count()
+    # 构造上下文  'count': count,
+    context = {'title': '商品详情',  'list': 1,
+               'guest_cart': 1, 'goodtype': goodtype,
+               'newgood': newgood, 'goodList': goodList,
+               'typeid': typeid, 'sort': sort,
+               'pindexlist': pindexlist, 'pageid': int(pageid),}
+
+    # 渲染返回结果
+    return render(request, 'ec_goods/list.html', context)
+
+
+def detail(request,id):
+    goods = GoodsInfo.objects.get(pk=int(id))
+    goods.gclick=goods.gclick+1
+    goods.save()
+    # 查询当前商品的类型
+    goodtype = TypeInfo.objects.get(goodsinfo__id=id)
+    news = goods.gtype.goodsinfo_set.order_by('-id')[0:2]
+    context={'title':goods.gtype.ttitle,'guest_cart':1,
+             'g':goods,'newgood':news,'id':id,
+             'isDetail': True,'list':1,'goodtype': goodtype}
+    response=render(request,'ec_goods/detail.html',context)
+
+
+    #使用cookies记录最近浏览的商品id
+
+    #获取cookies
+    goods_ids = request.COOKIES.get('goods_ids', '')
+    #获取当前点击商品id
+    goods_id='%d'%goods.id
+    #判断cookies中商品id是否为空
+    if goods_ids!='':
+        #分割出每个商品id
+        goods_id_list=goods_ids.split(',')
+        #判断商品是否已经存在于列表
+        if goods_id_list.count(goods_id)>=1:
+            #存在则移除
+            goods_id_list.remove(goods_id)
+        #在第一位添加
+        goods_id_list.insert(0,goods_id)
+        #判断列表数是否超过5个
+        if len(goods_id_list)>=6:
+            #超过五个则删除第6个
+            del goods_id_list[5]
+        #添加商品id到cookies
+        goods_ids=','.join(goods_id_list)
     else:
-        pages = range(pindex - 2, pindex + 3)
+        #第一次添加，直接追加
+        goods_ids=goods_id
+    response.set_cookie('goods_ids',goods_ids)
 
-    return render(request, 'ec_goods/list.html', {'goods_li': goods_li,
-                                                  'goods_new': goods_new,
-                                                  'type_id': goods_type_id,
-                                                  'type_title': GOODS_TYPE[int(goods_type_id)],
-                                                  'sort': sort,
-                                                  'pages': pages})
-
-# from django.shortcuts import render
-# from  ec_goods.models import *
-# from django.core.paginator import Paginator,Page
-# # Create your views here.
-#
-# def index(request):
-#     #查询分类的最新4条，最热4条数据
-#     typelist = TypeInfo.objects.all()
-#     type0 = typelist[0].goodsinfo_set.order_by('-id')[0:4]
-#     type01 = typelist[0].goodsinfo_set.order_by('-gclick')[0:4]
-#     type1 = typelist[1].goodsinfo_set.order_by('-id')[0:4]
-#     type11 = typelist[1].goodsinfo_set.order_by('-gclick')[0:4]
-#     type2 = typelist[2].goodsinfo_set.order_by('-id')[0:4]
-#     type21 = typelist[2].goodsinfo_set.order_by('-gclick')[0:4]
-#     type3 = typelist[3].goodsinfo_set.order_by('-id')[0:4]
-#     type31 = typelist[3].goodsinfo_set.order_by('-gclick')[0:4]
-#     type4 = typelist[4].goodsinfo_set.order_by('-id')[0:4]
-#     type41 = typelist[4].goodsinfo_set.order_by('-gclick')[0:4]
-#     type5 = typelist[5].goodsinfo_set.order_by('-id')[0:4]
-#     type51 = typelist[5].goodsinfo_set.order_by('-gclick')[0:4]
-#
-#     context = {'title':'首页','guest_cart':1,
-#                'type0': type0, 'type01': type01,
-#                'type1': type1, 'type11': type11,
-#                'type2': type2, 'type21': type21,
-#                'type3': type3, 'type31': type31,
-#                'type4': type4, 'type41': type41,
-#                'type5': type5, 'type51': type51,
-#                }
-#     return render(request,'ec_goods/list.html',context)
-# def list(request,tid,pindex,sort):
-#     typeinfo = TypeInfo.objects.get(pk=int(tid))
-#     news = typeinfo.goodsinfo_set.order_by('-id')[0:2]
-#     if sort == '1': #默认最新
-#         goods_list = GoodsInfo.objects.filter(gtype_id=int(tid)).order_by()
-#     if sort == '2': #价格
-#         goods_list = GoodsInfo.objects.filter(gtype_id=int(tid)).order_by()
-#     if sort == '3': #人气：点击量
-#         goods_list = GoodsInfo.objects.filter(gtype_id=int(tid)).order_by()
-#     paginator = Paginator(goods_list,10)
-#     page = Paginator.page(pindex)
-#     context = {
-#         'title': typeinfo.ttitle,
-#         'guest_cart': 1,
-#         'typeinfo': typeinfo,
-#         'sort': sort,
-#
-#     }
-#     return render(request,'ec_goods/list.html',context)
-#
-# def detail(request,id):
-#     goods = GoodsInfo.objects.get(pk=int(id))
-#     goods.gclick + 1
-#     goods.save()
-#     news = goods.gtype.goodsinfo_set.order_by('-id')[0:2]
-#     context = {
-#         'title':goods.gtype.ttitle,
-#         'guest_cart':1,
-#         'g':goods,
-#         'new':news,
-#         'id': id
-#     }
-#     return render(request,'ec_goods/detail.html',context)
+    return response

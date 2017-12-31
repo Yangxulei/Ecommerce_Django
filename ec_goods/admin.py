@@ -1,14 +1,17 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 from django.contrib import admin
-from ec_goods.models import *
+from ec_goods.models import TypeInfo,GoodsInfo
 
 
 # Register your models here.
+class TypeInfoAdmin(admin.ModelAdmin):
+    list_display = ['id','ttitle']
 
+class GoodsInfoAdmin(admin.ModelAdmin):
+    list_per_page = 15
+    list_display = ['id','gtitle','gprice','gunit','gkucun','gcontent','gtype']
 
-class GoodsAdmin(admin.ModelAdmin):
-    list_display = ['id',
-                    'goods_name', 'goods_sub_title', 'goods_price', 'transit_price',
-                    'goods_unite', 'goods_info', 'goods_image', 'goods_stock', 'goods_status'
-                    ]
-
-admin.site.register(Goods, GoodsAdmin)
+admin.site.register(TypeInfo,TypeInfoAdmin)
+admin.site.register(GoodsInfo,GoodsInfoAdmin)
