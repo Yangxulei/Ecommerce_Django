@@ -25,8 +25,8 @@ An E-commerce website with Django
 - Whoosh==2.7.4
 
 ## TODO
-- 修复编码问题，此项目暂不能完全通过测试
-- 增加第三方登录
+- [X]修复编码问题，此项目暂不能完全通过测试
+- []增加第三方登录
 - 待续
 ## Development Progress
 #### 用户

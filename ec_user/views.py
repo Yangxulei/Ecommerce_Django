@@ -1,6 +1,5 @@
-#coding=utf-8
-from __future__ import unicode_literals
-
+# coding : utf-8
+# from __future__ import unicode_literals
 from django.shortcuts import render, redirect, HttpResponseRedirect
 from django.http import HttpResponse
 from ec_user.models import *
@@ -23,8 +22,8 @@ def register_handle(requst):
     # 接收用户输入
     post = requst.POST
     uname = post.get('user_name')
-    upwd = post.get('pwd').encode("UTF-8")
-    ucpwd = post.get('cpwd').encode("UTF-8")
+    upwd = post.get('pwd').encode('utf-8')
+    ucpwd = post.get('cpwd').encode('utf-8')
     uemail = post.get('email')
     # 判断两次密码
     if upwd != ucpwd:
@@ -39,10 +38,14 @@ def register_handle(requst):
     user.uname = uname
     user.upwd = upwd2
     user.uemail = uemail
+    # user = UserInfo()
+    # user.uname = bytes.decode(uname)
+    # user.upwd = bytes.decode(upwd2)
+    # user.uemail = bytes.decode(uemail)
     user.save()
-    return HttpResponse("success")
+    #return HttpResponse("success")
     # 注册成功，转到登录页面
-    # return redirect('/user/login/')
+    return redirect('/user/login/')
     # return JsonResponse({'status': "success"})
 
 # 判断用户是否已经存在
@@ -63,16 +66,17 @@ def login(request):
 def login_handle(request):
     # 接收请求信息
     post = request.POST
-    uname = post.get('username').encode("UTF-8")
-    upwd = post.get('pwd').encode("UTF-8")
+    uname = post.get('username')
+    upwd = post.get('pwd')
     jizhu = post.get('jizhu', 0)
     # 根据用户名查询对象
     users = UserInfo.objects.filter(uname=uname)
-    print(uname)
+    print(uname,upwd)
+    red = HttpResponseRedirect('/user/info')
     # 判断如果未查到则用户名错，查到再判断密码是否正确，正确则转到用户中心
     if len(users) == 1:
         s1 = sha1()
-        s1.update(upwd)
+        s1.update(upwd.encode('utf-8'))
         if s1.hexdigest() == users[0].upwd:
             red = HttpResponseRedirect('/user/info')
             # 记住用户名
@@ -101,7 +105,8 @@ def info(request):
     goods_id_list = goods_ids.split(',')
     goods_list=[]
     for goods_id in goods_id_list:
-        goods_list.append(GoodsInfo.objects.get(id=int(goods_id)))
+        if goods_id != "":
+            goods_list.append(GoodsInfo.objects.get(id=int(goods_id)))
 
     context = {'title': '用户中心',
                'user_email': user_email,
